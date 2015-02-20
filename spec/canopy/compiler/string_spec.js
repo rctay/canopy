@@ -44,7 +44,7 @@ function() { with(this) {
         string2 <- `bar`')
     }})
 
-    it('fails to parse when absent', function() { with(this) {
+    it('parses when absent', function() { with(this) {
       assertParse( ['foo', 0, []
                      ['foo', 0, []],
                      ['', 3, []]],

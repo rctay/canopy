@@ -7,9 +7,11 @@ Canopy.Compiler.CIString = {
     var string = this.stringValue(),
         length = string.length,
         temp   = builder.tempVar_('temp', builder.slice_(length)),
-        tlc    = '.toLowerCase()';
+        tlc    = '.toLowerCase()',
+        guard  = temp,
+        match  = temp + tlc + ' === "' + string + '"' + tlc;
 
-    builder.if_(temp + tlc + ' === "' + string + '"' + tlc, function(builder) {
+    builder.if_(guard + ' && ' + match, function(builder) {
       builder.syntaxNode_(address, nodeType, temp, length);
     });
     builder.else_(function(builder) {
