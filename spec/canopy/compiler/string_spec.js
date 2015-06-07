@@ -3,36 +3,47 @@ function() { with(this) {
   include(Canopy.SpecHelper)
 
   before(function() { with(this) {
-    Canopy.compile('grammar JS.ENV.StringTest\
+    Canopy.compile('grammar JS.ENV.StringTest \
       string <- "foo"')
   }})
 
   it('parses the string it contains', function() { with(this) {
-    assertParse( ['foo', 0, []], StringTestParser.parse('foo') )
+    assertParse( ['foo', 0, []], StringTest.parse('foo') )
   }})
 
   it('does not parse other strings', function() { with(this) {
-    assertThrows(Error, function() { StringTestParser.parse('FOO') })
-    assertThrows(Error, function() { StringTestParser.parse('bar') })
+    assertThrows(Error, function() { StringTest.parse('FOO') })
+    assertThrows(Error, function() { StringTest.parse('bar') })
   }})
 
   it('does not parse superstrings of itself', function() { with(this) {
-    assertThrows(Error, function() { StringTestParser.parse('food') })
+    assertThrows(Error, function() { StringTest.parse('food') })
   }})
 
   it('does not parse the empty string', function() { with(this) {
-    assertThrows(Error, function() { StringTestParser.parse('') })
+    assertThrows(Error, function() { StringTest.parse('') })
+  }})
+
+  describe('single-quoted strings', function() { with(this) {
+    before(function() { with(this) {
+      Canopy.compile("grammar JS.ENV.SingleQuoteTest \
+        string <- 'foo'")
+    }})
+
+    it('parses the string it contains', function() { with(this) {
+      assertParse( ['foo', 0, []], SingleQuoteTest.parse('foo') )
+    }})
   }})
 
   describe('case-insensitive strings', function() { with(this) {
     before(function() { with(this) {
-      Canopy.compile('grammar JS.ENV.CIStringTest\
+      Canopy.compile('grammar JS.ENV.CIStringTest \
         string <- `foo`')
     }})
 
     it('parses the string it contains', function() { with(this) {
-      assertParse( ['foo', 0, []], CIStringTestParser.parse('foo') )
-      assertParse( ['FOO', 0, []], CIStringTestParser.parse('FOO') )
+      assertParse( ['foo', 0, []], CIStringTest.parse('foo') )
+      assertParse( ['FOO', 0, []], CIStringTest.parse('FOO') )
     }})
   }})
 
@@ -52,4 +63,3 @@ function() { with(this) {
     }})
   }})
 }})
-

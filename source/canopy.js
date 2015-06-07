@@ -1,3 +1,5 @@
+'use strict';
+
 var Canopy = {};
 
 Canopy.extend = function(destination, source) {
@@ -10,24 +12,11 @@ Canopy.extend = function(destination, source) {
   };
 
 Canopy.extend(Canopy, {
-  compile: function(grammar) {
-    var compiler = new this.Compiler(grammar),
-        source   = compiler.toSource();
+  Builders: {},
 
-    eval(source);
-    return source;
-  },
-
-  find: function(root, objectName) {
-    var parts = objectName.split('.'),
-        part;
-
-    while (part = parts.shift()) {
-      root = root[part];
-      if (root === undefined)
-        throw new Error('Cannot find object named ' + objectName);
-    }
-    return root;
+  compile: function(grammar, builder) {
+    var compiler = new this.Compiler(grammar, builder);
+    return compiler.toSource();
   },
 
   forEach: function(list, block, context) {
@@ -35,26 +24,32 @@ Canopy.extend(Canopy, {
       block.call(context, list[i], i);
   },
 
-  formatError: function(error) {
-    var lines  = error.input.split(/\n/g),
+  formatError: function(input, offset, expected) {
+    var lines = input.split(/\n/g),
         lineNo = 0,
-        offset = 0;
+        position = 0;
 
-    while (offset < error.offset + 1) {
-      offset += lines[lineNo].length + 1;
+    while (position <= offset) {
+      position += lines[lineNo].length + 1;
       lineNo += 1;
     }
-    var message = 'Line ' + lineNo + ': expected ' + error.expected + '\n',
-        line    = lines[lineNo - 1];
+    var message = 'Line ' + lineNo + ': expected ' + expected.join(', ') + '\n',
+        line = lines[lineNo - 1];
 
     message += line + '\n';
-    offset  -= line.length + 1;
+    position -= line.length + 1;
 
-    while (offset < error.offset) {
+    while (position < offset) {
       message += ' ';
-      offset  += 1;
+      position += 1;
     }
     return message + '^';
+  },
+
+  inherit: function(subclass, parent) {
+    var chain = function() {};
+    chain.prototype = parent.prototype;
+    subclass.prototype = new chain();
+    subclass.prototype.constructor = subclass;
   }
 });
-

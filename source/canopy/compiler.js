@@ -1,16 +1,17 @@
-Canopy.Compiler = function(grammarText) {
+Canopy.Compiler = function(grammarText, builder) {
   this._grammarText = grammarText;
+  this._builder = builder;
 };
 
 Canopy.extend(Canopy.Compiler.prototype, {
   parseTree: function() {
     if (this._tree) return this._tree;
-    var P = Canopy.MetaGrammarParser, message;
+    var P = Canopy.MetaGrammar, message;
 
-    this._tree = P.parse(this._grammarText);
+    this._tree = P.parse(this._grammarText, {types: Canopy.Compiler});
     if (this._tree) return this._tree;
 
-    message = P.formatError(P.lastError);
+    message = P.formatError(P.Parser.lastError);
     throw new Error(message);
   },
 
@@ -19,9 +20,7 @@ Canopy.extend(Canopy.Compiler.prototype, {
   },
 
   toSource: function() {
-    var builder = new Canopy.Builder();
-    this.parseTree().compile(builder);
-    return builder.serialize();
+    this.parseTree().compile(this._builder);
+    return this._builder.serialize();
   }
 });
-

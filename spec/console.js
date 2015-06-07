@@ -11,7 +11,7 @@ if (this.ActiveXObject)
   };
 
 if (typeof require === 'function') {
-  JS = require('../node_modules/jstest/jstest')
+  global.JS = require('../node_modules/jstest/jstest')
   JS.ENV.Canopy = require('../lib/canopy')
   require('./runner')
 } else {
@@ -19,4 +19,3 @@ if (typeof require === 'function') {
   load('lib/canopy-min.js')
   load('spec/runner.js')
 }
-

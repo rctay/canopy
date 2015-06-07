@@ -3,25 +3,21 @@ Canopy.Compiler.CIString = {
     return ['ci-string', this.stringValue()];
   },
 
-  compile: function(builder, address, nodeType) {
+  compile: function(builder, address, action) {
     var string = this.stringValue(),
         length = string.length,
-        temp   = builder.tempVar_('temp', builder.slice_(length)),
-        tlc    = '.toLowerCase()',
-        guard  = temp,
-        match  = temp + tlc + ' === "' + string + '"' + tlc;
+        chunk  = builder.chunk_(length);
 
-    builder.if_(guard + ' && ' + match, function(builder) {
-      builder.syntaxNode_(address, nodeType, temp, length);
-    });
-    builder.else_(function(builder) {
-      builder.failure_(address, this.textValue);
+    builder.if_(builder.stringMatchCI_(chunk, string), function(builder) {
+      var of = builder.offset_();
+      builder.syntaxNode_(address, of, of + ' + ' + length, null, action);
+    }, function(builder) {
+      builder.failure_(address, this.text);
     }, this);
   },
 
   stringValue: function() {
-    var string = '"' + this.elements[1].textValue + '"';
+    var string = '"' + this.elements[1].text + '"';
     return eval(string);
   }
 };
-

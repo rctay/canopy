@@ -1,10 +1,8 @@
 .git
 .gitignore
 .npmignore
-.redcar
-examples
-Jakefile
-jake.yml
+.wake.json
+Gemfile*
 node_modules
 site
 source

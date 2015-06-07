@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>{{ site.title }} &ndash; {{ page.title }}</title>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Cutive+Mono|Josefin+Slab:100,400|Raleway:300">
+    <link rel="stylesheet" href="/css/main.css">
+  <body>
+
+    <nav>
+      <header>
+        <h1>
+          <a href="/">Canopy</a>
+          <span>A parser compiler</span>
+        </h1>
+      </header>
+
+      {% include navigation.html %}
+
+      <footer>
+        <p>Copyright &copy; 2010&ndash;2015
+          <a href="http://jcoglan.com">James Coglan</a>
+          Released under the MIT license</p>
+      </footer>
+    </nav>
+
+    <main>
+      <article>
+        {{ content }}
+      </article>
+    </main>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-873493-13']);
+      _gaq.push(['_trackPageview']);
+    
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+
+  </body>
+</html>

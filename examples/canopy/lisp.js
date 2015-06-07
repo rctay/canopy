@@ -1,4 +1,6 @@
 (function() {
+  'use strict';
+
   var extend = function (destination, source) {
     if (!destination || !source) return destination;
     for (var key in source) {
@@ -8,147 +10,143 @@
     return destination;
   };
 
-  var find = function (root, objectName) {
-    var parts = objectName.split('.'),
-        part;
-
-    while (part = parts.shift()) {
-      root = root[part];
-      if (root === undefined)
-        throw new Error('Cannot find object named ' + objectName);
-    }
-    return root;
-  };
-
-  var formatError = function (error) {
-    var lines  = error.input.split(/\n/g),
+  var formatError = function (input, offset, expected) {
+    var lines = input.split(/\n/g),
         lineNo = 0,
-        offset = 0;
+        position = 0;
 
-    while (offset < error.offset + 1) {
-      offset += lines[lineNo].length + 1;
+    while (position <= offset) {
+      position += lines[lineNo].length + 1;
       lineNo += 1;
     }
-    var message = 'Line ' + lineNo + ': expected ' + error.expected + '\n',
-        line    = lines[lineNo - 1];
+    var message = 'Line ' + lineNo + ': expected ' + expected.join(', ') + '\n',
+        line = lines[lineNo - 1];
 
     message += line + '\n';
-    offset  -= line.length + 1;
+    position -= line.length + 1;
 
-    while (offset < error.offset) {
+    while (position < offset) {
       message += ' ';
-      offset  += 1;
+      position += 1;
     }
     return message + '^';
   };
 
+  var inherit = function (subclass, parent) {
+    var chain = function() {};
+    chain.prototype = parent.prototype;
+    subclass.prototype = new chain();
+    subclass.prototype.constructor = subclass;
+  };
+
+  var TreeNode = function(text, offset, elements) {
+    this.text = text;
+    this.offset = offset;
+    this.elements = elements || [];
+  };
+
+  TreeNode.prototype.forEach = function(block, context) {
+    for (var el = this.elements, i = 0, n = el.length; i < n; i++) {
+      block.call(context, el[i], i, el);
+    }
+  };
+
+  var TreeNode1 = function(text, offset, elements) {
+    TreeNode.apply(this, arguments);
+    this['data'] = elements[1];
+  };
+  inherit(TreeNode1, TreeNode);
+
+  var TreeNode2 = function(text, offset, elements) {
+    TreeNode.apply(this, arguments);
+    this['cells'] = elements[1];
+  };
+  inherit(TreeNode2, TreeNode);
+
+  var FAILURE = {};
+
   var Grammar = {
-    __consume__program: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["program"] = this._nodeCache["program"] || {};
-      var cached = this._nodeCache["program"][index0];
+    _read_program: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._program = this._cache._program || {};
+      var cached = this._cache._program[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var remaining0 = 1, index1 = this._offset, elements0 = [], text0 = "", address1 = true;
-      while (address1) {
-        address1 = this.__consume__cell();
-        if (address1) {
+      var remaining0 = 1, index1 = this._offset, elements0 = [], address1 = true;
+      while (address1 !== FAILURE) {
+        address1 = this._read_cell();
+        if (address1 !== FAILURE) {
           elements0.push(address1);
-          text0 += address1.textValue;
-          remaining0 -= 1;
+          --remaining0;
         }
       }
       if (remaining0 <= 0) {
-        this._offset = index1;
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address0 = new klass0(text0, this._offset, elements0);
-        if (typeof type0 === "object") {
-          extend(address0, type0);
-        }
-        this._offset += text0.length;
+        address0 = new TreeNode(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       } else {
-        address0 = null;
+        address0 = FAILURE;
       }
-      return this._nodeCache["program"][index0] = address0;
+      this._cache._program[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__cell: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["cell"] = this._nodeCache["cell"] || {};
-      var cached = this._nodeCache["cell"][index0];
+
+    _read_cell: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._cell = this._cache._cell || {};
+      var cached = this._cache._cell[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var index1 = this._offset, elements0 = [], labelled0 = {}, text0 = "";
-      var address1 = null;
-      var remaining0 = 0, index2 = this._offset, elements1 = [], text1 = "", address2 = true;
-      while (address2) {
-        address2 = this.__consume__space();
-        if (address2) {
+      var index1 = this._offset, elements0 = new Array(3);
+      var address1 = FAILURE;
+      var remaining0 = 0, index2 = this._offset, elements1 = [], address2 = true;
+      while (address2 !== FAILURE) {
+        address2 = this._read_space();
+        if (address2 !== FAILURE) {
           elements1.push(address2);
-          text1 += address2.textValue;
-          remaining0 -= 1;
+          --remaining0;
         }
       }
       if (remaining0 <= 0) {
-        this._offset = index2;
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address1 = new klass0(text1, this._offset, elements1);
-        if (typeof type0 === "object") {
-          extend(address1, type0);
-        }
-        this._offset += text1.length;
+        address1 = new TreeNode(this._input.substring(index2, this._offset), index2, elements1);
+        this._offset = this._offset;
       } else {
-        address1 = null;
+        address1 = FAILURE;
       }
-      if (address1) {
-        elements0.push(address1);
-        text0 += address1.textValue;
-        var address3 = null;
+      if (address1 !== FAILURE) {
+        elements0[0] = address1;
+        var address3 = FAILURE;
         var index3 = this._offset;
-        address3 = this.__consume__list();
-        if (address3) {
-        } else {
+        address3 = this._read_list();
+        if (address3 === FAILURE) {
           this._offset = index3;
-          address3 = this.__consume__atom();
-          if (address3) {
-          } else {
+          address3 = this._read_atom();
+          if (address3 === FAILURE) {
             this._offset = index3;
           }
         }
-        if (address3) {
-          elements0.push(address3);
-          text0 += address3.textValue;
-          labelled0.data = address3;
-          var address4 = null;
-          var remaining1 = 0, index4 = this._offset, elements2 = [], text2 = "", address5 = true;
-          while (address5) {
-            address5 = this.__consume__space();
-            if (address5) {
+        if (address3 !== FAILURE) {
+          elements0[1] = address3;
+          var address4 = FAILURE;
+          var remaining1 = 0, index4 = this._offset, elements2 = [], address5 = true;
+          while (address5 !== FAILURE) {
+            address5 = this._read_space();
+            if (address5 !== FAILURE) {
               elements2.push(address5);
-              text2 += address5.textValue;
-              remaining1 -= 1;
+              --remaining1;
             }
           }
           if (remaining1 <= 0) {
-            this._offset = index4;
-            var klass1 = this.constructor.SyntaxNode;
-            var type1 = null;
-            address4 = new klass1(text2, this._offset, elements2);
-            if (typeof type1 === "object") {
-              extend(address4, type1);
-            }
-            this._offset += text2.length;
+            address4 = new TreeNode(this._input.substring(index4, this._offset), index4, elements2);
+            this._offset = this._offset;
           } else {
-            address4 = null;
+            address4 = FAILURE;
           }
-          if (address4) {
-            elements0.push(address4);
-            text0 += address4.textValue;
+          if (address4 !== FAILURE) {
+            elements0[2] = address4;
           } else {
             elements0 = null;
             this._offset = index1;
@@ -161,115 +159,82 @@
         elements0 = null;
         this._offset = index1;
       }
-      if (elements0) {
-        this._offset = index1;
-        var klass2 = this.constructor.SyntaxNode;
-        var type2 = null;
-        address0 = new klass2(text0, this._offset, elements0, labelled0);
-        if (typeof type2 === "object") {
-          extend(address0, type2);
-        }
-        this._offset += text0.length;
+      if (elements0 === null) {
+        address0 = FAILURE;
       } else {
-        address0 = null;
+        address0 = new TreeNode1(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       }
-      return this._nodeCache["cell"][index0] = address0;
+      this._cache._cell[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__list: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["list"] = this._nodeCache["list"] || {};
-      var cached = this._nodeCache["list"][index0];
+
+    _read_list: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._list = this._cache._list || {};
+      var cached = this._cache._list[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var index1 = this._offset, elements0 = [], labelled0 = {}, text0 = "";
-      var address1 = null;
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 1);
+      var index1 = this._offset, elements0 = new Array(3);
+      var address1 = FAILURE;
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 1);
+      }
+      if (chunk0 === '(') {
+        address1 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+        this._offset = this._offset + 1;
       } else {
-        slice0 = null;
-      }
-      if (slice0 === "(") {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address1 = new klass0("(", this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address1, type0);
+        address1 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        this._offset += 1;
-      } else {
-        address1 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
-        }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"(\""};
+        if (this._offset === this._failure) {
+          this._expected.push('"("');
         }
       }
-      if (address1) {
-        elements0.push(address1);
-        text0 += address1.textValue;
-        var address2 = null;
-        var remaining0 = 1, index2 = this._offset, elements1 = [], text1 = "", address3 = true;
-        while (address3) {
-          address3 = this.__consume__cell();
-          if (address3) {
+      if (address1 !== FAILURE) {
+        elements0[0] = address1;
+        var address2 = FAILURE;
+        var remaining0 = 1, index2 = this._offset, elements1 = [], address3 = true;
+        while (address3 !== FAILURE) {
+          address3 = this._read_cell();
+          if (address3 !== FAILURE) {
             elements1.push(address3);
-            text1 += address3.textValue;
-            remaining0 -= 1;
+            --remaining0;
           }
         }
         if (remaining0 <= 0) {
-          this._offset = index2;
-          var klass1 = this.constructor.SyntaxNode;
-          var type1 = null;
-          address2 = new klass1(text1, this._offset, elements1);
-          if (typeof type1 === "object") {
-            extend(address2, type1);
-          }
-          this._offset += text1.length;
+          address2 = new TreeNode(this._input.substring(index2, this._offset), index2, elements1);
+          this._offset = this._offset;
         } else {
-          address2 = null;
+          address2 = FAILURE;
         }
-        if (address2) {
-          elements0.push(address2);
-          text0 += address2.textValue;
-          labelled0.cells = address2;
-          var address4 = null;
-          var slice2 = null;
-          if (this._input.length > this._offset) {
-            slice2 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice2 = null;
+        if (address2 !== FAILURE) {
+          elements0[1] = address2;
+          var address4 = FAILURE;
+          var chunk1 = null;
+          if (this._offset < this._inputSize) {
+            chunk1 = this._input.substring(this._offset, this._offset + 1);
           }
-          if (slice2 === ")") {
-            var klass2 = this.constructor.SyntaxNode;
-            var type2 = null;
-            address4 = new klass2(")", this._offset, []);
-            if (typeof type2 === "object") {
-              extend(address4, type2);
-            }
-            this._offset += 1;
+          if (chunk1 === ')') {
+            address4 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+            this._offset = this._offset + 1;
           } else {
-            address4 = null;
-            var slice3 = null;
-            if (this._input.length > this._offset) {
-              slice3 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice3 = null;
+            address4 = FAILURE;
+            if (this._offset > this._failure) {
+              this._failure = this._offset;
+              this._expected = [];
             }
-            if (!this.error || this.error.offset <= this._offset) {
-              this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\")\""};
+            if (this._offset === this._failure) {
+              this._expected.push('")"');
             }
           }
-          if (address4) {
-            elements0.push(address4);
-            text0 += address4.textValue;
+          if (address4 !== FAILURE) {
+            elements0[2] = address4;
           } else {
             elements0 = null;
             this._offset = index1;
@@ -282,211 +247,160 @@
         elements0 = null;
         this._offset = index1;
       }
-      if (elements0) {
-        this._offset = index1;
-        var klass3 = this.constructor.SyntaxNode;
-        var type3 = null;
-        address0 = new klass3(text0, this._offset, elements0, labelled0);
-        if (typeof type3 === "object") {
-          extend(address0, type3);
-        }
-        this._offset += text0.length;
+      if (elements0 === null) {
+        address0 = FAILURE;
       } else {
-        address0 = null;
+        address0 = new TreeNode2(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       }
-      return this._nodeCache["list"][index0] = address0;
+      this._cache._list[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__atom: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["atom"] = this._nodeCache["atom"] || {};
-      var cached = this._nodeCache["atom"][index0];
+
+    _read_atom: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._atom = this._cache._atom || {};
+      var cached = this._cache._atom[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
       var index1 = this._offset;
-      address0 = this.__consume__boolean();
-      if (address0) {
-      } else {
+      address0 = this._read_boolean_();
+      if (address0 === FAILURE) {
         this._offset = index1;
-        address0 = this.__consume__integer();
-        if (address0) {
-        } else {
+        address0 = this._read_integer();
+        if (address0 === FAILURE) {
           this._offset = index1;
-          address0 = this.__consume__string();
-          if (address0) {
-          } else {
+          address0 = this._read_string();
+          if (address0 === FAILURE) {
             this._offset = index1;
-            address0 = this.__consume__symbol();
-            if (address0) {
-            } else {
+            address0 = this._read_symbol();
+            if (address0 === FAILURE) {
               this._offset = index1;
             }
           }
         }
       }
-      return this._nodeCache["atom"][index0] = address0;
+      this._cache._atom[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__boolean: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["boolean"] = this._nodeCache["boolean"] || {};
-      var cached = this._nodeCache["boolean"][index0];
+
+    _read_boolean_: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._boolean_ = this._cache._boolean_ || {};
+      var cached = this._cache._boolean_[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
       var index1 = this._offset;
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 2);
-      } else {
-        slice0 = null;
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 2);
       }
-      if (slice0 === "#t") {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address0 = new klass0("#t", this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address0, type0);
-        }
-        this._offset += 2;
+      if (chunk0 === '#t') {
+        address0 = new TreeNode(this._input.substring(this._offset, this._offset + 2), this._offset);
+        this._offset = this._offset + 2;
       } else {
-        address0 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
+        address0 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"#t\""};
+        if (this._offset === this._failure) {
+          this._expected.push('"#t"');
         }
       }
-      if (address0) {
-      } else {
+      if (address0 === FAILURE) {
         this._offset = index1;
-        var slice2 = null;
-        if (this._input.length > this._offset) {
-          slice2 = this._input.substring(this._offset, this._offset + 2);
-        } else {
-          slice2 = null;
+        var chunk1 = null;
+        if (this._offset < this._inputSize) {
+          chunk1 = this._input.substring(this._offset, this._offset + 2);
         }
-        if (slice2 === "#f") {
-          var klass1 = this.constructor.SyntaxNode;
-          var type1 = null;
-          address0 = new klass1("#f", this._offset, []);
-          if (typeof type1 === "object") {
-            extend(address0, type1);
-          }
-          this._offset += 2;
+        if (chunk1 === '#f') {
+          address0 = new TreeNode(this._input.substring(this._offset, this._offset + 2), this._offset);
+          this._offset = this._offset + 2;
         } else {
-          address0 = null;
-          var slice3 = null;
-          if (this._input.length > this._offset) {
-            slice3 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice3 = null;
+          address0 = FAILURE;
+          if (this._offset > this._failure) {
+            this._failure = this._offset;
+            this._expected = [];
           }
-          if (!this.error || this.error.offset <= this._offset) {
-            this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"#f\""};
+          if (this._offset === this._failure) {
+            this._expected.push('"#f"');
           }
         }
-        if (address0) {
-        } else {
+        if (address0 === FAILURE) {
           this._offset = index1;
         }
       }
-      return this._nodeCache["boolean"][index0] = address0;
+      this._cache._boolean_[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__integer: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["integer"] = this._nodeCache["integer"] || {};
-      var cached = this._nodeCache["integer"][index0];
+
+    _read_integer: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._integer = this._cache._integer || {};
+      var cached = this._cache._integer[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var index1 = this._offset, elements0 = [], labelled0 = {}, text0 = "";
-      var address1 = null;
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 1);
+      var index1 = this._offset, elements0 = new Array(2);
+      var address1 = FAILURE;
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 1);
+      }
+      if (chunk0 !== null && /^[1-9]/.test(chunk0)) {
+        address1 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+        this._offset = this._offset + 1;
       } else {
-        slice0 = null;
-      }
-      if (slice0 && /^[1-9]/.test(slice0)) {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address1 = new klass0(slice0, this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address1, type0);
+        address1 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        this._offset += 1;
-      } else {
-        address1 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
-        }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "[1-9]"};
+        if (this._offset === this._failure) {
+          this._expected.push('[1-9]');
         }
       }
-      if (address1) {
-        elements0.push(address1);
-        text0 += address1.textValue;
-        var address2 = null;
-        var remaining0 = 0, index2 = this._offset, elements1 = [], text1 = "", address3 = true;
-        while (address3) {
-          var slice2 = null;
-          if (this._input.length > this._offset) {
-            slice2 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice2 = null;
+      if (address1 !== FAILURE) {
+        elements0[0] = address1;
+        var address2 = FAILURE;
+        var remaining0 = 0, index2 = this._offset, elements1 = [], address3 = true;
+        while (address3 !== FAILURE) {
+          var chunk1 = null;
+          if (this._offset < this._inputSize) {
+            chunk1 = this._input.substring(this._offset, this._offset + 1);
           }
-          if (slice2 && /^[0-9]/.test(slice2)) {
-            var klass1 = this.constructor.SyntaxNode;
-            var type1 = null;
-            address3 = new klass1(slice2, this._offset, []);
-            if (typeof type1 === "object") {
-              extend(address3, type1);
-            }
-            this._offset += 1;
+          if (chunk1 !== null && /^[0-9]/.test(chunk1)) {
+            address3 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+            this._offset = this._offset + 1;
           } else {
-            address3 = null;
-            var slice3 = null;
-            if (this._input.length > this._offset) {
-              slice3 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice3 = null;
+            address3 = FAILURE;
+            if (this._offset > this._failure) {
+              this._failure = this._offset;
+              this._expected = [];
             }
-            if (!this.error || this.error.offset <= this._offset) {
-              this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "[0-9]"};
+            if (this._offset === this._failure) {
+              this._expected.push('[0-9]');
             }
           }
-          if (address3) {
+          if (address3 !== FAILURE) {
             elements1.push(address3);
-            text1 += address3.textValue;
-            remaining0 -= 1;
+            --remaining0;
           }
         }
         if (remaining0 <= 0) {
-          this._offset = index2;
-          var klass2 = this.constructor.SyntaxNode;
-          var type2 = null;
-          address2 = new klass2(text1, this._offset, elements1);
-          if (typeof type2 === "object") {
-            extend(address2, type2);
-          }
-          this._offset += text1.length;
+          address2 = new TreeNode(this._input.substring(index2, this._offset), index2, elements1);
+          this._offset = this._offset;
         } else {
-          address2 = null;
+          address2 = FAILURE;
         }
-        if (address2) {
-          elements0.push(address2);
-          text0 += address2.textValue;
+        if (address2 !== FAILURE) {
+          elements0[1] = address2;
         } else {
           elements0 = null;
           this._offset = index1;
@@ -495,125 +409,86 @@
         elements0 = null;
         this._offset = index1;
       }
-      if (elements0) {
-        this._offset = index1;
-        var klass3 = this.constructor.SyntaxNode;
-        var type3 = null;
-        address0 = new klass3(text0, this._offset, elements0, labelled0);
-        if (typeof type3 === "object") {
-          extend(address0, type3);
-        }
-        this._offset += text0.length;
+      if (elements0 === null) {
+        address0 = FAILURE;
       } else {
-        address0 = null;
+        address0 = new TreeNode(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       }
-      return this._nodeCache["integer"][index0] = address0;
+      this._cache._integer[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__string: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["string"] = this._nodeCache["string"] || {};
-      var cached = this._nodeCache["string"][index0];
+
+    _read_string: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._string = this._cache._string || {};
+      var cached = this._cache._string[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var index1 = this._offset, elements0 = [], labelled0 = {}, text0 = "";
-      var address1 = null;
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 1);
+      var index1 = this._offset, elements0 = new Array(3);
+      var address1 = FAILURE;
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 1);
+      }
+      if (chunk0 === '"') {
+        address1 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+        this._offset = this._offset + 1;
       } else {
-        slice0 = null;
-      }
-      if (slice0 === "\"") {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address1 = new klass0("\"", this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address1, type0);
+        address1 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        this._offset += 1;
-      } else {
-        address1 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
-        }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"\\\"\""};
+        if (this._offset === this._failure) {
+          this._expected.push('"\\""');
         }
       }
-      if (address1) {
-        elements0.push(address1);
-        text0 += address1.textValue;
-        var address2 = null;
-        var remaining0 = 0, index2 = this._offset, elements1 = [], text1 = "", address3 = true;
-        while (address3) {
+      if (address1 !== FAILURE) {
+        elements0[0] = address1;
+        var address2 = FAILURE;
+        var remaining0 = 0, index2 = this._offset, elements1 = [], address3 = true;
+        while (address3 !== FAILURE) {
           var index3 = this._offset;
-          var index4 = this._offset, elements2 = [], labelled1 = {}, text2 = "";
-          var address4 = null;
-          var slice2 = null;
-          if (this._input.length > this._offset) {
-            slice2 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice2 = null;
+          var index4 = this._offset, elements2 = new Array(2);
+          var address4 = FAILURE;
+          var chunk1 = null;
+          if (this._offset < this._inputSize) {
+            chunk1 = this._input.substring(this._offset, this._offset + 1);
           }
-          if (slice2 === "\\") {
-            var klass1 = this.constructor.SyntaxNode;
-            var type1 = null;
-            address4 = new klass1("\\", this._offset, []);
-            if (typeof type1 === "object") {
-              extend(address4, type1);
-            }
-            this._offset += 1;
+          if (chunk1 === '\\') {
+            address4 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+            this._offset = this._offset + 1;
           } else {
-            address4 = null;
-            var slice3 = null;
-            if (this._input.length > this._offset) {
-              slice3 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice3 = null;
+            address4 = FAILURE;
+            if (this._offset > this._failure) {
+              this._failure = this._offset;
+              this._expected = [];
             }
-            if (!this.error || this.error.offset <= this._offset) {
-              this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"\\\\\""};
+            if (this._offset === this._failure) {
+              this._expected.push('"\\\\"');
             }
           }
-          if (address4) {
-            elements2.push(address4);
-            text2 += address4.textValue;
-            var address5 = null;
-            var slice4 = null;
-            if (this._input.length > this._offset) {
-              slice4 = this._input.substring(this._offset, this._offset + 1);
+          if (address4 !== FAILURE) {
+            elements2[0] = address4;
+            var address5 = FAILURE;
+            if (this._offset < this._inputSize) {
+              address5 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+              this._offset = this._offset + 1;
             } else {
-              slice4 = null;
+              address5 = FAILURE;
+              if (this._offset > this._failure) {
+                this._failure = this._offset;
+                this._expected = [];
+              }
+              if (this._offset === this._failure) {
+                this._expected.push('<any char>');
+              }
             }
-            var temp0 = slice4;
-            if (temp0 === null) {
-              address5 = null;
-              var slice5 = null;
-              if (this._input.length > this._offset) {
-                slice5 = this._input.substring(this._offset, this._offset + 1);
-              } else {
-                slice5 = null;
-              }
-              if (!this.error || this.error.offset <= this._offset) {
-                this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "<any char>"};
-              }
-            } else {
-              var klass2 = this.constructor.SyntaxNode;
-              var type2 = null;
-              address5 = new klass2(temp0, this._offset, []);
-              if (typeof type2 === "object") {
-                extend(address5, type2);
-              }
-              this._offset += 1;
-            }
-            if (address5) {
-              elements2.push(address5);
-              text2 += address5.textValue;
+            if (address5 !== FAILURE) {
+              elements2[1] = address5;
             } else {
               elements2 = null;
               this._offset = index4;
@@ -622,103 +497,68 @@
             elements2 = null;
             this._offset = index4;
           }
-          if (elements2) {
-            this._offset = index4;
-            var klass3 = this.constructor.SyntaxNode;
-            var type3 = null;
-            address3 = new klass3(text2, this._offset, elements2, labelled1);
-            if (typeof type3 === "object") {
-              extend(address3, type3);
-            }
-            this._offset += text2.length;
+          if (elements2 === null) {
+            address3 = FAILURE;
           } else {
-            address3 = null;
+            address3 = new TreeNode(this._input.substring(index4, this._offset), index4, elements2);
+            this._offset = this._offset;
           }
-          if (address3) {
-          } else {
+          if (address3 === FAILURE) {
             this._offset = index3;
-            var slice6 = null;
-            if (this._input.length > this._offset) {
-              slice6 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice6 = null;
+            var chunk2 = null;
+            if (this._offset < this._inputSize) {
+              chunk2 = this._input.substring(this._offset, this._offset + 1);
             }
-            if (slice6 && /^[^"]/.test(slice6)) {
-              var klass4 = this.constructor.SyntaxNode;
-              var type4 = null;
-              address3 = new klass4(slice6, this._offset, []);
-              if (typeof type4 === "object") {
-                extend(address3, type4);
-              }
-              this._offset += 1;
+            if (chunk2 !== null && /^[^"]/.test(chunk2)) {
+              address3 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+              this._offset = this._offset + 1;
             } else {
-              address3 = null;
-              var slice7 = null;
-              if (this._input.length > this._offset) {
-                slice7 = this._input.substring(this._offset, this._offset + 1);
-              } else {
-                slice7 = null;
+              address3 = FAILURE;
+              if (this._offset > this._failure) {
+                this._failure = this._offset;
+                this._expected = [];
               }
-              if (!this.error || this.error.offset <= this._offset) {
-                this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "[^\"]"};
+              if (this._offset === this._failure) {
+                this._expected.push('[^"]');
               }
             }
-            if (address3) {
-            } else {
+            if (address3 === FAILURE) {
               this._offset = index3;
             }
           }
-          if (address3) {
+          if (address3 !== FAILURE) {
             elements1.push(address3);
-            text1 += address3.textValue;
-            remaining0 -= 1;
+            --remaining0;
           }
         }
         if (remaining0 <= 0) {
-          this._offset = index2;
-          var klass5 = this.constructor.SyntaxNode;
-          var type5 = null;
-          address2 = new klass5(text1, this._offset, elements1);
-          if (typeof type5 === "object") {
-            extend(address2, type5);
-          }
-          this._offset += text1.length;
+          address2 = new TreeNode(this._input.substring(index2, this._offset), index2, elements1);
+          this._offset = this._offset;
         } else {
-          address2 = null;
+          address2 = FAILURE;
         }
-        if (address2) {
-          elements0.push(address2);
-          text0 += address2.textValue;
-          var address6 = null;
-          var slice8 = null;
-          if (this._input.length > this._offset) {
-            slice8 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice8 = null;
+        if (address2 !== FAILURE) {
+          elements0[1] = address2;
+          var address6 = FAILURE;
+          var chunk3 = null;
+          if (this._offset < this._inputSize) {
+            chunk3 = this._input.substring(this._offset, this._offset + 1);
           }
-          if (slice8 === "\"") {
-            var klass6 = this.constructor.SyntaxNode;
-            var type6 = null;
-            address6 = new klass6("\"", this._offset, []);
-            if (typeof type6 === "object") {
-              extend(address6, type6);
-            }
-            this._offset += 1;
+          if (chunk3 === '"') {
+            address6 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+            this._offset = this._offset + 1;
           } else {
-            address6 = null;
-            var slice9 = null;
-            if (this._input.length > this._offset) {
-              slice9 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice9 = null;
+            address6 = FAILURE;
+            if (this._offset > this._failure) {
+              this._failure = this._offset;
+              this._expected = [];
             }
-            if (!this.error || this.error.offset <= this._offset) {
-              this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"\\\"\""};
+            if (this._offset === this._failure) {
+              this._expected.push('"\\""');
             }
           }
-          if (address6) {
-            elements0.push(address6);
-            text0 += address6.textValue;
+          if (address6 !== FAILURE) {
+            elements0[2] = address6;
           } else {
             elements0 = null;
             this._offset = index1;
@@ -731,80 +571,55 @@
         elements0 = null;
         this._offset = index1;
       }
-      if (elements0) {
-        this._offset = index1;
-        var klass7 = this.constructor.SyntaxNode;
-        var type7 = null;
-        address0 = new klass7(text0, this._offset, elements0, labelled0);
-        if (typeof type7 === "object") {
-          extend(address0, type7);
-        }
-        this._offset += text0.length;
+      if (elements0 === null) {
+        address0 = FAILURE;
       } else {
-        address0 = null;
+        address0 = new TreeNode(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       }
-      return this._nodeCache["string"][index0] = address0;
+      this._cache._string[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__symbol: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["symbol"] = this._nodeCache["symbol"] || {};
-      var cached = this._nodeCache["symbol"][index0];
+
+    _read_symbol: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._symbol = this._cache._symbol || {};
+      var cached = this._cache._symbol[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var remaining0 = 1, index1 = this._offset, elements0 = [], text0 = "", address1 = true;
-      while (address1) {
-        var index2 = this._offset, elements1 = [], labelled0 = {}, text1 = "";
-        var address2 = null;
+      var remaining0 = 1, index1 = this._offset, elements0 = [], address1 = true;
+      while (address1 !== FAILURE) {
+        var index2 = this._offset, elements1 = new Array(2);
+        var address2 = FAILURE;
         var index3 = this._offset;
-        address2 = this.__consume__delimiter();
+        address2 = this._read_delimiter();
         this._offset = index3;
-        if (!(address2)) {
-          var klass0 = this.constructor.SyntaxNode;
-          var type0 = null;
-          address2 = new klass0("", this._offset, []);
-          if (typeof type0 === "object") {
-            extend(address2, type0);
-          }
-          this._offset += 0;
+        if (address2 === FAILURE) {
+          address2 = new TreeNode(this._input.substring(this._offset, this._offset), this._offset);
+          this._offset = this._offset;
         } else {
-          address2 = null;
+          address2 = FAILURE;
         }
-        if (address2) {
-          elements1.push(address2);
-          text1 += address2.textValue;
-          var address3 = null;
-          var slice0 = null;
-          if (this._input.length > this._offset) {
-            slice0 = this._input.substring(this._offset, this._offset + 1);
+        if (address2 !== FAILURE) {
+          elements1[0] = address2;
+          var address3 = FAILURE;
+          if (this._offset < this._inputSize) {
+            address3 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+            this._offset = this._offset + 1;
           } else {
-            slice0 = null;
+            address3 = FAILURE;
+            if (this._offset > this._failure) {
+              this._failure = this._offset;
+              this._expected = [];
+            }
+            if (this._offset === this._failure) {
+              this._expected.push('<any char>');
+            }
           }
-          var temp0 = slice0;
-          if (temp0 === null) {
-            address3 = null;
-            var slice1 = null;
-            if (this._input.length > this._offset) {
-              slice1 = this._input.substring(this._offset, this._offset + 1);
-            } else {
-              slice1 = null;
-            }
-            if (!this.error || this.error.offset <= this._offset) {
-              this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "<any char>"};
-            }
-          } else {
-            var klass1 = this.constructor.SyntaxNode;
-            var type1 = null;
-            address3 = new klass1(temp0, this._offset, []);
-            if (typeof type1 === "object") {
-              extend(address3, type1);
-            }
-            this._offset += 1;
-          }
-          if (address3) {
-            elements1.push(address3);
-            text1 += address3.textValue;
+          if (address3 !== FAILURE) {
+            elements1[1] = address3;
           } else {
             elements1 = null;
             this._offset = index2;
@@ -813,220 +628,168 @@
           elements1 = null;
           this._offset = index2;
         }
-        if (elements1) {
-          this._offset = index2;
-          var klass2 = this.constructor.SyntaxNode;
-          var type2 = null;
-          address1 = new klass2(text1, this._offset, elements1, labelled0);
-          if (typeof type2 === "object") {
-            extend(address1, type2);
-          }
-          this._offset += text1.length;
+        if (elements1 === null) {
+          address1 = FAILURE;
         } else {
-          address1 = null;
+          address1 = new TreeNode(this._input.substring(index2, this._offset), index2, elements1);
+          this._offset = this._offset;
         }
-        if (address1) {
+        if (address1 !== FAILURE) {
           elements0.push(address1);
-          text0 += address1.textValue;
-          remaining0 -= 1;
+          --remaining0;
         }
       }
       if (remaining0 <= 0) {
-        this._offset = index1;
-        var klass3 = this.constructor.SyntaxNode;
-        var type3 = null;
-        address0 = new klass3(text0, this._offset, elements0);
-        if (typeof type3 === "object") {
-          extend(address0, type3);
-        }
-        this._offset += text0.length;
+        address0 = new TreeNode(this._input.substring(index1, this._offset), index1, elements0);
+        this._offset = this._offset;
       } else {
-        address0 = null;
+        address0 = FAILURE;
       }
-      return this._nodeCache["symbol"][index0] = address0;
+      this._cache._symbol[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__space: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["space"] = this._nodeCache["space"] || {};
-      var cached = this._nodeCache["space"][index0];
+
+    _read_space: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._space = this._cache._space || {};
+      var cached = this._cache._space[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 1);
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 1);
+      }
+      if (chunk0 !== null && /^[\s]/.test(chunk0)) {
+        address0 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+        this._offset = this._offset + 1;
       } else {
-        slice0 = null;
-      }
-      if (slice0 && /^[\s\n\r\t]/.test(slice0)) {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address0 = new klass0(slice0, this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address0, type0);
+        address0 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        this._offset += 1;
-      } else {
-        address0 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
-        }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "[\\s\\n\\r\\t]"};
+        if (this._offset === this._failure) {
+          this._expected.push('[\\s]');
         }
       }
-      return this._nodeCache["space"][index0] = address0;
+      this._cache._space[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__paren: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["paren"] = this._nodeCache["paren"] || {};
-      var cached = this._nodeCache["paren"][index0];
+
+    _read_paren: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._paren = this._cache._paren || {};
+      var cached = this._cache._paren[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
       var index1 = this._offset;
-      var slice0 = null;
-      if (this._input.length > this._offset) {
-        slice0 = this._input.substring(this._offset, this._offset + 1);
-      } else {
-        slice0 = null;
+      var chunk0 = null;
+      if (this._offset < this._inputSize) {
+        chunk0 = this._input.substring(this._offset, this._offset + 1);
       }
-      if (slice0 === "(") {
-        var klass0 = this.constructor.SyntaxNode;
-        var type0 = null;
-        address0 = new klass0("(", this._offset, []);
-        if (typeof type0 === "object") {
-          extend(address0, type0);
-        }
-        this._offset += 1;
+      if (chunk0 === '(') {
+        address0 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+        this._offset = this._offset + 1;
       } else {
-        address0 = null;
-        var slice1 = null;
-        if (this._input.length > this._offset) {
-          slice1 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice1 = null;
+        address0 = FAILURE;
+        if (this._offset > this._failure) {
+          this._failure = this._offset;
+          this._expected = [];
         }
-        if (!this.error || this.error.offset <= this._offset) {
-          this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\"(\""};
+        if (this._offset === this._failure) {
+          this._expected.push('"("');
         }
       }
-      if (address0) {
-      } else {
+      if (address0 === FAILURE) {
         this._offset = index1;
-        var slice2 = null;
-        if (this._input.length > this._offset) {
-          slice2 = this._input.substring(this._offset, this._offset + 1);
-        } else {
-          slice2 = null;
+        var chunk1 = null;
+        if (this._offset < this._inputSize) {
+          chunk1 = this._input.substring(this._offset, this._offset + 1);
         }
-        if (slice2 === ")") {
-          var klass1 = this.constructor.SyntaxNode;
-          var type1 = null;
-          address0 = new klass1(")", this._offset, []);
-          if (typeof type1 === "object") {
-            extend(address0, type1);
-          }
-          this._offset += 1;
+        if (chunk1 === ')') {
+          address0 = new TreeNode(this._input.substring(this._offset, this._offset + 1), this._offset);
+          this._offset = this._offset + 1;
         } else {
-          address0 = null;
-          var slice3 = null;
-          if (this._input.length > this._offset) {
-            slice3 = this._input.substring(this._offset, this._offset + 1);
-          } else {
-            slice3 = null;
+          address0 = FAILURE;
+          if (this._offset > this._failure) {
+            this._failure = this._offset;
+            this._expected = [];
           }
-          if (!this.error || this.error.offset <= this._offset) {
-            this.error = this.constructor.lastError = {input: this._input, offset: this._offset, expected: "\")\""};
+          if (this._offset === this._failure) {
+            this._expected.push('")"');
           }
         }
-        if (address0) {
-        } else {
+        if (address0 === FAILURE) {
           this._offset = index1;
         }
       }
-      return this._nodeCache["paren"][index0] = address0;
+      this._cache._paren[index0] = [address0, this._offset];
+      return address0;
     },
-    __consume__delimiter: function(input) {
-      var address0 = null, index0 = this._offset;
-      this._nodeCache["delimiter"] = this._nodeCache["delimiter"] || {};
-      var cached = this._nodeCache["delimiter"][index0];
+
+    _read_delimiter: function() {
+      var address0 = FAILURE, index0 = this._offset;
+      this._cache._delimiter = this._cache._delimiter || {};
+      var cached = this._cache._delimiter[index0];
       if (cached) {
-        this._offset += cached.textValue.length;
-        return cached;
+        this._offset = cached[1];
+        return cached[0];
       }
       var index1 = this._offset;
-      address0 = this.__consume__paren();
-      if (address0) {
-      } else {
+      address0 = this._read_paren();
+      if (address0 === FAILURE) {
         this._offset = index1;
-        address0 = this.__consume__space();
-        if (address0) {
-        } else {
+        address0 = this._read_space();
+        if (address0 === FAILURE) {
           this._offset = index1;
         }
       }
-      return this._nodeCache["delimiter"][index0] = address0;
+      this._cache._delimiter[index0] = [address0, this._offset];
+      return address0;
     }
   };
 
-  var Parser = function(input) {
+  var Parser = function(input, actions, types) {
     this._input = input;
+    this._inputSize = input.length;
+    this._actions = actions;
+    this._types = types;
     this._offset = 0;
-    this._nodeCache = {};
+    this._cache = {};
+    this._failure = 0;
+    this._expected = [];
   };
 
   Parser.prototype.parse = function() {
-    var result = this.__consume__program();
-    if (result && this._offset === this._input.length) {
-      return result;
+    var tree = this._read_program();
+    if (tree !== FAILURE && this._offset === this._inputSize) {
+      return tree;
     }
-    if (!(this.error)) {
-      this.error = {input: this._input, offset: this._offset, expected: "<EOF>"};
+    if (this._expected.length === 0) {
+      this._failure = this._offset;
+      this._expected.push('<EOF>');
     }
-    var message = formatError(this.error);
-    var error = new Error(message);
-    throw error;
+    this.constructor.lastError = {offset: this._offset, expected: this._expected};
+    throw new SyntaxError(formatError(this._input, this._failure, this._expected));
   };
 
-  Parser.parse = function(input) {
-    var parser = new Parser(input);
+  var parse = function(input, options) {
+    options = options || {};
+    var parser = new Parser(input, options.actions, options.types);
     return parser.parse();
   };
-
   extend(Parser.prototype, Grammar);
 
-  var SyntaxNode = function(textValue, offset, elements, properties) {
-    this.textValue = textValue;
-    this.offset    = offset;
-    this.elements  = elements || [];
-    if (!properties) return;
-    for (var key in properties) this[key] = properties[key];
-  };
+  var exported = {Grammar: Grammar, Parser: Parser, parse: parse};
 
-  SyntaxNode.prototype.forEach = function(block, context) {
-    for (var i = 0, n = this.elements.length; i < n; i++) {
-      block.call(context, this.elements[i], i);
-    }
-  };
-
-  Parser.SyntaxNode = SyntaxNode;
-
-  if (typeof require === "function" && typeof exports === "object") {
-    exports.Grammar = Grammar;
-    exports.Parser  = Parser;
-    exports.parse   = Parser.parse;
-
+  if (typeof require === 'function' && typeof exports === 'object') {
+    extend(exports, exported);
   } else {
-    var namespace = this;
-    CanopyLisp = Grammar;
-    CanopyLispParser = Parser;
-    CanopyLispParser.formatError = formatError;
+    var namespace = typeof this !== 'undefined' ? this : window;
+    namespace.CanopyLisp = exported;
   }
 })();
-
