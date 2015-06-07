@@ -59,7 +59,7 @@ function() { with(this) {
       assertParse( ['foo', 0, []
                      ['foo', 0, []],
                      ['', 3, []]],
-        CIStringTestParser.parse('foo') )
+        CIStringTest.parse('foo') )
     }})
   }})
 }})
