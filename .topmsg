@@ -1,5 +1,5 @@
 From: Tay Ray Chuan <rctay89@gmail.com>
-Subject: [PATCH] tg/opt-ci/test
+Subject: [PATCH] add test for optional, case-insensitive nodes
 
-<patch description>
+This currently fails when the node is absent.
 
