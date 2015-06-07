@@ -49,9 +49,9 @@ function() { with(this) {
 
   describe('optional case-insensitive strings', function() { with(this) {
     before(function() { with(this) {
-      Canopy.compile('grammar JS.ENV.CIStringTest\
-        root <- string1 string2?\
-        string1 <- "foo"\
+      Canopy.compile('grammar JS.ENV.CIStringTest \
+        root <- string1 string2? \
+        string1 <- "foo" \
         string2 <- `bar`')
     }})
 
