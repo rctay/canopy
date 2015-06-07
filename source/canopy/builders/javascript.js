@@ -342,7 +342,7 @@
     },
 
     stringMatchCI_: function(expression, string) {
-      return expression + ' !== null &&' +
+      return expression + ' !== null && ' +
         expression + '.toLowerCase() === ' + this._quote(string) + '.toLowerCase()';
     },
 
