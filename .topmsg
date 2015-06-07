@@ -1,5 +1,5 @@
 From: Tay Ray Chuan <rctay89@gmail.com>
-Subject: [PATCH] tg/opt-ci/0work
+Subject: [PATCH] check token before calling toLowerCase on it
 
-<patch description>
+This allows optional case-insensitive nodes to match.
 
