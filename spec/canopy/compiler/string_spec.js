@@ -45,10 +45,7 @@ function() { with(this) {
     }})
 
     it('fails to parse when absent', function() { with(this) {
-      assertParse( ['foo', 0, []
-                     ['foo', 0, []],
-                     ['', 3, []]],
-        CIStringTestParser.parse('foo') )
+      assertThrows(Error, function() { CIStringTestParser.parse('foo') })
     }})
   }})
 }})
