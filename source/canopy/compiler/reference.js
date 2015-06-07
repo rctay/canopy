@@ -1,18 +1,13 @@
 Canopy.Compiler.Reference = {
   referenceName: function() {
-    return this.identifier.textValue;
+    return this.identifier.text;
   },
 
   toSexp: function() {
     return ['reference', this.referenceName()];
   },
 
-  compile: function(builder, address, nodeType) {
-    builder.line_(address + ' = this.__consume__' + this.referenceName() + '()');
-    if (nodeType) {
-      var type = builder.findType_(nodeType);
-      builder.extendNode_(address, type);
-    }
+  compile: function(builder, address) {
+    builder.jump_(address, this.referenceName());
   }
 };
-

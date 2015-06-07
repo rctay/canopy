@@ -3,7 +3,7 @@ function() { with(this) {
   include(Canopy.SpecHelper)
 
   before(function() { with(this) {
-    Canopy.compile('grammar JS.ENV.SequenceTest\
+    Canopy.compile('grammar JS.ENV.SequenceTest \
       sequence <- "foo" "bar"')
   }})
 
@@ -12,26 +12,26 @@ function() { with(this) {
                   ['foo', 0, []],
                   ['bar', 3, []]]],
 
-      SequenceTestParser.parse('foobar') )
+      SequenceTest.parse('foobar') )
   }})
 
   it('does not parse nonmatching sequences', function() { with(this) {
-    assertThrows(Error, function() { SequenceTestParser.parse('foobaz') })
-    assertThrows(Error, function() { SequenceTestParser.parse('doobar') })
+    assertThrows(Error, function() { SequenceTest.parse('foobaz') })
+    assertThrows(Error, function() { SequenceTest.parse('doobar') })
   }})
 
   it('does not parse if the first term is missing', function() { with(this) {
-    assertThrows(Error, function() { SequenceTestParser.parse('bar') })
+    assertThrows(Error, function() { SequenceTest.parse('bar') })
   }})
 
   it('does not parse superstrings of itself', function() { with(this) {
-    assertThrows(Error, function() { SequenceTestParser.parse('foobart') })
+    assertThrows(Error, function() { SequenceTest.parse('foobart') })
   }})
 
   describe('labelling', function() { with(this) {
     describe('a terminal node', function() { with(this) {
       before(function() { with(this) {
-        Canopy.compile('grammar JS.ENV.LabelTestA\
+        Canopy.compile('grammar JS.ENV.LabelTestA \
           root <- "first" middle:"second" "third"')
       }})
 
@@ -43,14 +43,14 @@ function() { with(this) {
                       middle: ['second', 5, []]
                     }],
 
-          LabelTestAParser.parse('firstsecondthird') )
+          LabelTestA.parse('firstsecondthird') )
       }})
     }})
 
     describe('a reference', function() { with(this) {
       before(function() { with(this) {
-        Canopy.compile('grammar JS.ENV.LabelTestR\
-          root   <- "first" middle "third"\
+        Canopy.compile('grammar JS.ENV.LabelTestR \
+          root   <- "first" middle "third" \
           middle <- "second"')
       }})
 
@@ -62,13 +62,33 @@ function() { with(this) {
                       middle: ['second', 5, []]
                     }],
 
-          LabelTestRParser.parse('firstsecondthird') )
+          LabelTestR.parse('firstsecondthird') )
+      }})
+    }})
+
+    describe('a labelled reference', function() { with(this) {
+      before(function() { with(this) {
+        Canopy.compile('grammar JS.ENV.LabelTestR \
+          root   <- "first" alias:middle "third" \
+          middle <- "second"')
+      }})
+
+      it('uses the name of the label and reference', function() { with(this) {
+        assertParse(['firstsecondthird', 0, [
+                      ['first', 0, []],
+                      ['second', 5, []],
+                      ['third', 11, []]], {
+                      alias: ['second', 5, []],
+                      middle: ['second', 5, []]
+                    }],
+
+          LabelTestR.parse('firstsecondthird') )
       }})
     }})
 
     describe('a repetition node', function() { with(this) {
       before(function() { with(this) {
-        Canopy.compile('grammar JS.ENV.LabelTestB\
+        Canopy.compile('grammar JS.ENV.LabelTestB \
           root <- "first" middle:"a"+ "third"')
       }})
 
@@ -84,17 +104,17 @@ function() { with(this) {
                         ['a', 6, []]]]
                     }],
 
-          LabelTestBParser.parse('firstaathird') )
+          LabelTestB.parse('firstaathird') )
       }})
 
       it('does not parse if the expression it labels does not parse', function() { with(this) {
-        assertThrows(Error, function() { LabelTestBParser.parse('firstthird') })
+        assertThrows(Error, function() { LabelTestB.parse('firstthird') })
       }})
     }})
 
     describe('nesting', function() { with(this) {
       before(function() { with(this) {
-        Canopy.compile('grammar JS.ENV.LabelTestC\
+        Canopy.compile('grammar JS.ENV.LabelTestC \
           root <- firstLetter:[a-z] restLetters:(", " letter:[a-z])*')
 
         this.rest = [', b, c', 1, [
@@ -118,9 +138,8 @@ function() { with(this) {
                       restLetters: rest
                     }],
 
-          LabelTestCParser.parse('a, b, c') )
+          LabelTestC.parse('a, b, c') )
       }})
     }})
   }})
 }})
-

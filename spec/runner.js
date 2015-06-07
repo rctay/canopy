@@ -8,7 +8,7 @@ JS.require('JS.Test', function() {
   Canopy.SpecHelper = new JS.Module({
     assertParse: function(tuple, actual) {
       this.__wrapAssertion__(function() {
-        this.assertEqual( tuple[0], actual.textValue )
+        this.assertEqual( tuple[0], actual.text )
         this.assertEqual( tuple[1], actual.offset )
 
         if (!tuple[2]) return;
@@ -23,7 +23,15 @@ JS.require('JS.Test', function() {
     }
   })
 
-  JS.require( 'Canopy.MetaGrammarParserSpec',
+  var compile = Canopy.compile
+
+  Canopy.compile = function(grammar) {
+    var builder = Canopy.Builders.JavaScript.create('testfile')
+    var source = compile.call(this, grammar, builder)
+    eval(source.testfile)
+  }
+
+  JS.require( 'Canopy.MetaGrammarSpec',
               'CanopySpec',
               'Canopy.Compiler.AnyCharSpec',
               'Canopy.Compiler.CharClassSpec',
@@ -37,4 +45,3 @@ JS.require('JS.Test', function() {
 
               function() { JS.Test.autorun() })
 })
-

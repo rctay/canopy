@@ -1,0 +1,130 @@
+---
+---
+
+body {
+  background: #E2E2E4;
+  color: #292836;
+  font: 300 18px/1.5 FreeSans, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  background: #28252F;
+  font-size: 0.7em;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+
+  header {
+    background: #C37386;
+    padding: 2em 3em;
+
+    h1, a, span {
+      color: #28252F;
+      display: block;
+      font-weight: 300;
+      margin: 0;
+    }
+
+    a {
+      letter-spacing: 1em;
+      text-transform: uppercase;
+    }
+
+    span {
+      border-top: 1px solid #28252F;
+      margin-top: 0.6em;
+      padding-top: 0.6em;
+      text-transform: lowercase;
+    }
+  }
+
+  footer {
+    background: #6386A8;
+    padding: 1em 3em;
+    position: absolute;
+    bottom: 0;
+  }
+
+  ul {
+    margin: 2em 0 0;
+    padding: 0;
+
+    li {
+      margin: 0;
+      padding: 0 3em;
+    }
+
+    a {
+      text-transform: uppercase;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  }
+
+  a {
+    color: #9CA7B1;
+    text-decoration: none;
+  }
+}
+
+main {
+  margin-left: 300px;
+  padding: 1em 0;
+
+  article {
+    h2, p {
+      width: 720px;
+    }
+
+    h2 {
+      font-size: 2em;
+      font-weight: 600;
+      margin: 0.75em 0;
+      padding-left: 2em;
+    }
+
+    h6 {
+      background: #C07438;
+      color: white;
+      display: inline-block;
+      font-size: 0.8em;
+      font-weight: 200;
+      margin: 0.5em 0 0.2em;
+      padding: 0.2em 2em 0.2em 5em;
+    }
+
+    p, ul {
+      margin: 1.5em 0;
+      padding-left: 4em;
+    }
+
+    pre {
+      margin: 0;
+      background: white;
+      padding: 1.5em 0 1.5em 4em;
+    }
+
+    h6 + .highlight pre {
+      background: #5C779B;
+      color: white;
+    }
+
+    code {
+      font: 0.8em Ubuntu Mono, Monaco, Courier New, monospace;
+    }
+
+    a {
+      color: #C07438;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  }
+}
+
+@import "syntax-highlighting";
